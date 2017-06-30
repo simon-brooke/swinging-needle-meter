@@ -27,11 +27,13 @@
                                :width    "450px"
                                :children [[title2 "Notes"]
                                           [status-text "Wildly experimental"]
-                                          [p "An SVG swinging needle meter. Note that the cursor will vanish if the setpoint is null or zero; this is intentional."]
+                                          [p "An SVG swinging needle meter."]
+                                          [p "Note that the cursor will vanish if the setpoint is null or is less than or equal to min-value; this is intentional."]
+                                          [p "Note that if the value of model is lower then min-value or greater than max-value,
+                                           it will be limited as it would be on a mechanical meter."]
+                                          [p "You can hide the redzone by setting its style to the style 'snm-scale'"]
                                           [p
-                                           "TODO: You can't adjust the position of the start of the red-zone; "
-                                           "you can't override the classes for the different elements of the meter; "
-                                           "you can't override the maximum and minimum values."]
+                                           "TODO: You can't adjust the position of the start of the red-zone; "]
                                           [args-table swinging-needle-args-desc]]]
                               [v-box
                                :gap      "10px"
