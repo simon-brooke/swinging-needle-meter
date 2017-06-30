@@ -4,7 +4,7 @@ A [re-frame](https://github.com/Day8/re-frame) application designed to display a
 
 Works well in Chrome and Firefox; not tested in Internet Exploder.
 
-![what it should look like](master/resources/public/images/example.png)
+![what it should look like](resources/public/images/example.png)
 
 ## Development Mode
 
