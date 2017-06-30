@@ -1,0 +1,46 @@
+/***************************************************************************\
+ *                                                                         *
+ *      swinging-needle-meter.css                                          *
+ *                                                                         *
+ *      CSS styling for the swinging needle meter.                         *
+ *                                                                         *
+\***************************************************************************/
+
+.snm-cursor {
+	stroke:#ff8500;
+	stroke-width:5;
+	stroke-opacity: 0.5;
+}
+
+.snm-frame {
+	fill: none;
+	stroke-width: 10;
+	stroke-linejoin: round;
+	stroke: #444444;
+}
+
+.snm-hub {
+	fill: #444444;
+}
+
+.snm-meter {
+	height: 50%;
+	width: auto;
+}
+
+.snm-needle {
+	stroke: black;
+	stroke-width: 1;
+}
+
+.snm-redzone {
+	fill:none;
+	stroke: maroon;
+	stroke-width: 15;
+}
+
+.snm-scale {
+	fill: none;
+	stroke: green;
+	stroke-width: 15;
+}
