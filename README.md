@@ -2,6 +2,10 @@
 
 A [re-frame](https://github.com/Day8/re-frame) application designed to display an example swinging needle meter, as an experiment in animating SVG from re-frame. Draws heavily on re-com.
 
+Works well in Chrome and Firefox; not tested in Internet Exploder.
+
+![what it should look like](master/resources/public/images/example.png)
+
 ## Development Mode
 
 ### Run application:
