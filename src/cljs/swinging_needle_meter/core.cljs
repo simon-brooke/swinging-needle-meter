@@ -6,6 +6,8 @@
             [swinging-needle-meter.views :as views]
             [swinging-needle-meter.config :as config]))
 
+;;; This file is unchanged (except this line) from the leiningen recom template
+
 
 (defn dev-setup []
   (when config/debug?
