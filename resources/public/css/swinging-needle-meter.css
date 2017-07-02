@@ -23,6 +23,11 @@
 	fill: #444444;
 }
 
+.snm-limit {
+  text-align: center;
+  font-size: 66%;
+}
+
 .snm-meter {
 	height: 50%;
 	width: auto;
@@ -43,4 +48,15 @@
 	fill: none;
 	stroke: green;
 	stroke-width: 15;
+}
+
+.snm-value {
+  text-align: center;
+}
+
+.snm-warning {
+	fill: none;
+	stroke-width: 10;
+	stroke-linejoin: round;
+  stroke: red;
 }

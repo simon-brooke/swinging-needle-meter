@@ -49,7 +49,9 @@
    {:name :max-value     :required false :type "double"                 :default 100
     :validate-fn number?           :description "the maximum value model can take"}
    {:name :class         :required false :type "string"
-    :validate-fn string?           :description "CSS class names, space separated"}
+    :validate-fn string?           :description "CSS class names, space separated, for the top-level SVG element"}
+   {:name :alarm-class  :required false :type "string"
+    :validate-fn string?           :description "CSS class names, space separated, for the cursor"}
    {:name :cursor-class  :required false :type "string"                 :default "snm-cursor"
     :validate-fn string?           :description "CSS class names, space separated, for the cursor"}
    {:name :frame-class   :required false :type "string"                 :default "snm-frame"
@@ -62,6 +64,10 @@
     :validate-fn string?           :description "CSS class names, space separated, for the scale"}
    {:name :redzone-class :required false :type "string"                 :default "snm-redzone"
     :validate-fn string?           :description "CSS class names, space separated, for the redzone"}
+   {:name :unit          :required false :type "string"
+    :validate-fn string?           :description "Unit to show after the value"}
+   {:name :id            :required false :type "string"                 :default "meter"
+    :validate-fn string?           :description "Element id for this instance of the meter"}
    {:name :style         :required false :type "CSS style map"
     :validate-fn css-style?        :description "CSS styles to add or override"}
    {:name :attr          :required false :type "HTML attr map"
@@ -88,56 +94,88 @@
 
 (defn swinging-needle-meter
   "Render an SVG swinging needle meter"
-  [& {:keys [model setpoint width height min-value max-value class cursor-class frame-class hub-class needle-class scale-class redzone-class style attr]
-      :or   {width "100%"
-             height "100%"
-             min-value 0
-             max-value 100
-             cursor-class "snm-cursor"
-             frame-class "snm-frame"
-             hub-class "snm-hub"
-             needle-class "snm-needle"
-             scale-class "snm-scale"
-             redzone-class "snm-redzone"}
+  [& {:keys [model setpoint width height min-value max-value class alarm-class cursor-class frame-class hub-class needle-class scale-class redzone-class unit id style attr]
+      :or   {width          "100%"
+             height         "100%"
+             min-value      0
+             max-value      100
+             cursor-class   "snm-cursor"
+             frame-class    "snm-frame"
+             hub-class      "snm-hub"
+             needle-class   "snm-needle"
+             scale-class    "snm-scale"
+             redzone-class  "snm-redzone"
+             id "meter"}
       :as   args}]
   {:pre [(validate-args-macro swinging-needle-args-desc args "swinging-needle")]}
   (let [model (deref-or-value model)
-        setpoint (deref-or-value setpoint)]
+        setpoint (deref-or-value setpoint)
+        current-value (str model (if unit " ") unit)]
     [box
      :align :start
      :child [:div
              (merge
-               {:class (str "rc-swinging-needle  " class)
+               {:class (str "swinging-needle  " class)
                 :style (merge (flex-child-style "none")
                               {:width width :height height}
                               style)}
                attr)
-             [:div
-              {:class (str "swinging-needle ")
-               :role  "swinging-needle"}
-              [:svg {:xmlns:svg "http://www.w3.org/2000/svg"
-                     :xmlns "http://www.w3.org/2000/svg"
-                     :xml:space "preserve"
-                     :overflow "visible"
-                     :viewBox "0 0 180 120"
-                     :y "0px"
-                     :x "0px"
-                     :version "1.1"
-                     :class (str "snm-meter " class)}
-                [:path {:class scale-class
-                       :d "m 11.85914,76.864488 c 0,0 14.34545,-53.795412 68.140856,-53.795412 53.795424,0 68.140864,53.795412 68.140864,53.795412"}]
-                [:path {:class redzone-class :d "m 137.74738,54.878869 c 0,0 3.02675,3.620416 6.3911,11.14347 3.36435,7.523055 4.20612,11.198095 4.20612,11.198095"}]
-                [:rect {:class frame-class :x "5" :y "5" :height "100" :width "150"}]
-                [:path {:class cursor-class
-                        :d "M 80,20 80,100"
-                        :visibility (if (and (number? setpoint) (> setpoint min-value)) "visible" "hidden")
-                        :transform (str "rotate( " (deflection setpoint min-value max-value) ", 80, 100)")}]
-                [:path {:class needle-class
-                        :d "M 80,20 80,100"
-                        :transform (str "rotate( " (deflection model min-value max-value) ", 80, 100)") }]
-                [:circle {:class hub-class :r "10" :cx "80" :cy "100"}]]
-;;; Useful for debugging:
-;;               (str "value: " model "; min: " min-value
-;;                    "; max: " max-value
-;;                    "; deflection: " (int (deflection model min-value max-value)))
-              ]]]))
+             [:svg {:xmlns:svg "http://www.w3.org/2000/svg"
+                    :xmlns "http://www.w3.org/2000/svg"
+                    :xml:space "preserve"
+                    :overflow "visible"
+                    :viewBox "0 0 180 120"
+                    :y "0px"
+                    :x "0px"
+                    :version "1.1"
+                    :id id
+                    :class (str "snm-meter " class)}
+              [:text
+               {:xml:space "preserve"
+                :x "-75.5"
+                :y "50"
+                :id (str id "-min-value")
+                :class "snm-limit"
+                :transform "matrix(0.2398013,-0.97082199,0.97082199,0.2398013,0,0)"}[:tspan min-value]]
+              [:text
+               {:xml:space "preserve"
+                :x "102"
+                :y "-102"
+                :id (str id "-max-value")
+                :class "snm-limit"
+                :transform "matrix(0.26614433,0.96393319,-0.96393319,0.26614433,0,0)"}[:tspan max-value]]
+              [:text
+               {:xml:space "preserve"
+                ;; 4.5 here is a real fudge. It's roughly half the width in SVG units of a single character;
+                ;; it's intended to keep the visible text roughly in the middle of the meter.
+                :x (str (- 80 (* (count current-value) 4.5)))
+                :y "60"
+                :width "100"
+                :id (str id "-current-value")
+                :class "snm-value"}[:tspan current-value]]
+              [:path {:class scale-class
+                      :id (str id "-scale")
+                      :d "m 11.85914,76.864488 c 0,0 14.34545,-53.795412 68.140856,-53.795412 53.795424,0 68.140864,53.795412 68.140864,53.795412"}]
+              [:path {:class redzone-class
+                      :id (str id "-redzone")
+                      :d "m 137.74738,54.878869 c 0,0 3.02675,3.620416 6.3911,11.14347 3.36435,7.523055 4.20612,11.198095 4.20612,11.198095"}]
+              [:rect {:class (str frame-class (if (< min-value model max-value) "" (str " " alarm-class)))
+                      :id (str id "-frame")
+                      :x "5" :y "5" :height "100" :width "150"}]
+              [:path {:class cursor-class
+                      :id (str id "-cursor")
+                      :d "M 80,20 80,100"
+                      :visibility (if (and (number? setpoint) (> setpoint min-value)) "visible" "hidden")
+                      :transform (str "rotate( " (deflection setpoint min-value max-value) ", 80, 100)")}]
+              [:path {:class needle-class
+                      :id (str id "-needle")
+                      :d "M 80,20 80,100"
+                      :transform (str "rotate( " (deflection model min-value max-value) ", 80, 100)") }]
+              [:circle {:class hub-class
+                        :id (str id "-hub")
+                        :r "10" :cx "80" :cy "100"}]]
+             ;;; Useful for debugging:
+                           (str "value: " model "; min: " min-value
+                                "; max: " max-value
+                                "; deflection: " (int (deflection model min-value max-value)))
+             ]]))

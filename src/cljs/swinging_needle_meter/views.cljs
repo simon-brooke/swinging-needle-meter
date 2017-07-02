@@ -41,9 +41,13 @@
                                           [v-box
                                            :gap      "20px"
                                            :children [[swinging-needle-meter
-                                                       :model    value
-                                                       :setpoint setpoint
-                                                       :width    "350px"]
+                                                       :model     value
+                                                       :setpoint  setpoint
+;;                                                        :unit      "Mw"
+;;                                                        :min-value 20
+;;                                                        :max-value 40
+;;                                                        :alarm-class "snm-warning"
+                                                       :width     "350px"]
                                                       [title :level :level3 :label "Parameters"]
                                                       [h-box
                                                        :gap "10px"
