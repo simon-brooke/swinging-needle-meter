@@ -42,5 +42,5 @@ lein cljsbuild once min
 ## License
 Copyright © 2017 Simon Brooke. Licensed under the GNU General Public License,
 version 2.0 or (at your option) any later version. If you wish to incorporate
-parts of Smeagol into another open source project which uses a less restrictive
+parts of this into another open source project which uses a less restrictive
 license, please contact me; I'm open to dual licensing it.
