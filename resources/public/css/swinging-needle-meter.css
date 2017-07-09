@@ -19,6 +19,16 @@
 	stroke: #444444;
 }
 
+.snm-gradation path {
+  stroke: black;
+  stroke-width: 1;
+}
+
+.snm-gradation text {
+  font-size: 50%;
+  font-weight: lighter;
+}
+
 .snm-hub {
 	fill: #444444;
 }
@@ -50,13 +60,14 @@
 	stroke-width: 15;
 }
 
+.snm-target .snm-frame {
+  stroke: green;
+}
+
 .snm-value {
   text-align: center;
 }
 
-.snm-warning {
-	fill: none;
-	stroke-width: 10;
-	stroke-linejoin: round;
-  stroke: red;
+.snm-warning .snm-frame {
+  stroke: maroon;
 }

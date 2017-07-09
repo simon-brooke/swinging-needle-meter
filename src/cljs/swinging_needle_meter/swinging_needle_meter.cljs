@@ -1,5 +1,6 @@
 (ns swinging-needle-meter.swinging-needle-meter
-  (:require [re-com.core     :refer [h-box v-box box gap line label title slider checkbox p]]
+  (:require [clojure.string :as string]
+            [re-com.core     :refer [h-box v-box box gap line label title slider checkbox p]]
             [re-com.box      :refer [flex-child-style]]
             [re-com.util     :refer [deref-or-value]]
             [re-com.validate :refer [number-or-string? css-style? html-attr? validate-args-macro]]
@@ -30,7 +31,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; ------------------------------------------------------------------------------------
-;;  Component: swinging-needle
+;;  Component: swinging-needle-meter
 ;; ------------------------------------------------------------------------------------
 
 ;;; It seems the defaults given here are just documentation; the defaults
@@ -48,10 +49,14 @@
     :validate-fn number?           :description "the minimum value model can take"}
    {:name :max-value     :required false :type "double"                 :default 100
     :validate-fn number?           :description "the maximum value model can take"}
+   {:name :warn-value    :required false :type "double"                 :default 80
+    :validate-fn number?           :description "the maximum safe value model can take"}
+   {:name :tolerance     :required false :type "double"                 :default 3
+    :validate-fn number?           :description "the amount by which model can differ from setpoint and still be considered acceptable"}
    {:name :class         :required false :type "string"
     :validate-fn string?           :description "CSS class names, space separated, for the top-level SVG element"}
-   {:name :alarm-class  :required false :type "string"
-    :validate-fn string?           :description "CSS class names, space separated, for the cursor"}
+   {:name :alarm-class  :required false :type "string"                  :default "snm-warning"
+    :validate-fn string?           :description "CSS class names, space separated, applied to the frame in an alarm condition"}
    {:name :cursor-class  :required false :type "string"                 :default "snm-cursor"
     :validate-fn string?           :description "CSS class names, space separated, for the cursor"}
    {:name :frame-class   :required false :type "string"                 :default "snm-frame"
@@ -64,10 +69,14 @@
     :validate-fn string?           :description "CSS class names, space separated, for the scale"}
    {:name :redzone-class :required false :type "string"                 :default "snm-redzone"
     :validate-fn string?           :description "CSS class names, space separated, for the redzone"}
+   {:name :target-class :required false :type "string"                 :default "snm-target"
+    :validate-fn string?           :description "CSS class names, space separated, , applied to the frame in an on-target condition"}
    {:name :unit          :required false :type "string"
     :validate-fn string?           :description "Unit to show after the value"}
    {:name :id            :required false :type "string"                 :default "meter"
     :validate-fn string?           :description "Element id for this instance of the meter"}
+   {:name :gradations    :reduired false :type "integer"                :default 5
+    :validate-fn integer?          :description "Number of gradations to show on the scale, not counting the point."}
    {:name :style         :required false :type "CSS style map"
     :validate-fn css-style?        :description "CSS styles to add or override"}
    {:name :attr          :required false :type "HTML attr map"
@@ -81,6 +90,10 @@
 ;; from the left end of the scale to right end, in degrees.
 (def full-scale-deflection 140)
 
+;; ultimately this should be resizeable, and radius should be a function of
+;; size...
+(def scale-radius 75)
+
 (defn deflection
   "Return the deflection of a needle given this `value` on the
   range `min-value`...`max-value`."
@@ -89,33 +102,97 @@
         deflection (/ value range)
         zero-offset (/ (- 0 min-value) range)
         limited (min (max (+ zero-offset deflection) 0) 1)]
+    (js/console.log (str "zero-offset: " zero-offset))
     (* (- limited 0.5) full-scale-deflection)))
+
+(defn polar-to-cartesian
+  "Return, as a map with keys :x. :y, the cartesian coordinates at the point
+   `radius` distance at `theta` (degrees) angle from a point at
+   cartesian coordinates `cx`, `cy`."
+  [cx cy radius theta]
+  (let
+    [in-radians (/ (* (- theta 90) (aget js/Math "PI")) 180.0)]
+    {:x (+ cx (* radius (.cos js/Math in-radians)))
+     :y (+ cy (* radius (.sin js/Math in-radians)))}))
+
+(defn describe-arc
+  "Return as a string an SVG path definition describing an arc centred
+   at `cx`, cy` starting at `start-angle` and ending at `end-angle` (both
+   angles in degrees)."
+  [cx cy radius start-angle end-angle]
+  (let
+    [start (polar-to-cartesian cx cy radius start-angle)
+     end (polar-to-cartesian cx cy radius end-angle)
+     large-arc? (if (<= (- end-angle start-angle) 180) 0 1)
+     sweep (if (> end-angle start-angle) 1 0)]
+    (string/join " " ["M" (:x start) (:y start) "A" radius radius 0 large-arc? sweep (:x end) (:y end)])))
+
+
+(defn as-label
+  "If this arg is a floating point number, format it to a reasonable width; else return it."
+  [arg]
+  (if
+    (and (number? arg) (not (integer? arg)))
+    (.toFixed arg 2)
+    arg))
+
+
+(defn gradation
+  "Return as a string an SVG path definition describing a radial stroke from a center
+  at `cx`, cy` starting at `min-radius` and extending to `max-radius`."
+  [cx cy min-radius max-radius angle label]
+  (let
+    [start (polar-to-cartesian cx cy min-radius angle)
+     mid (polar-to-cartesian cx cy (+ min-radius
+                                      (* (- max-radius min-radius) 0.333))
+                             angle)
+     end (polar-to-cartesian cx cy max-radius angle)]
+    [:g {:class "snm-gradation"}
+     [:path {:d (string/join " " ["M" (:x mid) (:y mid) "L"  (:x end) (:y end)])}]
+     [:text {:text-anchor "middle"
+             :x (:x start)
+             :y (:y start)
+             :transform (string/join " " ["rotate(" angle (:x start) (:y start) ")"])} (as-label label)]]))
 
 
 (defn swinging-needle-meter
   "Render an SVG swinging needle meter"
-  [& {:keys [model setpoint width height min-value max-value class alarm-class cursor-class frame-class hub-class needle-class scale-class redzone-class unit id style attr]
+  [& {:keys [model setpoint width height min-value max-value warn-value tolerance class gradations alarm-class cursor-class frame-class hub-class needle-class redzone-class scale-class target-class unit id style attr]
       :or   {width          "100%"
              height         "100%"
              min-value      0
              max-value      100
+             warn-value     80
+             tolerance      3
+             gradations     5
+             alarm-class    "snm-warning"
              cursor-class   "snm-cursor"
              frame-class    "snm-frame"
              hub-class      "snm-hub"
              needle-class   "snm-needle"
              scale-class    "snm-scale"
              redzone-class  "snm-redzone"
+             target-class   "snm-target"
              id "meter"}
       :as   args}]
   {:pre [(validate-args-macro swinging-needle-args-desc args "swinging-needle")]}
   (let [model (deref-or-value model)
         setpoint (deref-or-value setpoint)
-        current-value (str model (if unit " ") unit)]
+        mid-point-deflection (/ full-scale-deflection 2)
+        ;; if warn-value is greater than max-value, we don't want a red-zone at all.
+        red-zone-deflection (if
+                              (< warn-value max-value)
+                              (* full-scale-deflection (/ warn-value max-value))
+                              full-scale-deflection)]
     [box
      :align :start
      :child [:div
              (merge
-               {:class (str "swinging-needle  " class)
+               {:class (str "swinging-needle  " class " " (str
+                        (if (< min-value model warn-value) ""
+                          (str " " alarm-class))
+                        (if (and (> setpoint min-value)(< (abs (- model setpoint)) tolerance))
+                          (str " " target-class) "")))
                 :style (merge (flex-child-style "none")
                               {:width width :height height}
                               style)}
@@ -131,37 +208,19 @@
                     :id id
                     :class (str "snm-meter " class)}
               [:text
-               {:xml:space "preserve"
-                :x "-75.5"
-                :y "50"
-                :id (str id "-min-value")
-                :class "snm-limit"
-                :transform "matrix(0.2398013,-0.97082199,0.97082199,0.2398013,0,0)"}[:tspan min-value]]
-              [:text
-               {:xml:space "preserve"
-                :x "102"
-                :y "-102"
-                :id (str id "-max-value")
-                :class "snm-limit"
-                :transform "matrix(0.26614433,0.96393319,-0.96393319,0.26614433,0,0)"}[:tspan max-value]]
-              [:text
-               {:xml:space "preserve"
-                ;; 4.5 here is a real fudge. It's roughly half the width in SVG units of a single character;
-                ;; it's intended to keep the visible text roughly in the middle of the meter.
-                :x (str (- 80 (* (count current-value) 4.5)))
-                :y "60"
+               {:text-anchor "middle"
+                :x 80
+                :y 70
                 :width "100"
                 :id (str id "-current-value")
-                :class "snm-value"}[:tspan current-value]]
+                :class "snm-value"}[:tspan (str (as-label model) (if unit " ") unit)]]
               [:path {:class scale-class
                       :id (str id "-scale")
-                      :d "m 11.85914,76.864488 c 0,0 14.34545,-53.795412 68.140856,-53.795412 53.795424,0 68.140864,53.795412 68.140864,53.795412"}]
+                      :d (describe-arc 80 100 scale-radius (- 0 mid-point-deflection) mid-point-deflection)}]
               [:path {:class redzone-class
                       :id (str id "-redzone")
-                      :d "m 137.74738,54.878869 c 0,0 3.02675,3.620416 6.3911,11.14347 3.36435,7.523055 4.20612,11.198095 4.20612,11.198095"}]
-              [:rect {:class (str frame-class (if (< min-value model max-value) "" (str " " alarm-class)))
-                      :id (str id "-frame")
-                      :x "5" :y "5" :height "100" :width "150"}]
+                      :d (describe-arc 80 100 scale-radius (- red-zone-deflection mid-point-deflection) mid-point-deflection)}]
+
               [:path {:class cursor-class
                       :id (str id "-cursor")
                       :d "M 80,20 80,100"
@@ -171,11 +230,20 @@
                       :id (str id "-needle")
                       :d "M 80,20 80,100"
                       :transform (str "rotate( " (deflection model min-value max-value) ", 80, 100)") }]
+              (apply vector (cons :g (map #(gradation 80 100 60 82
+                                                      (- (* %
+                                                            (/ full-scale-deflection gradations))
+                                                         mid-point-deflection)
+                                                      (+ min-value
+                                                         (*
+                                                           (/
+                                                             (- max-value min-value)
+                                                             gradations) %)))
+                                          (range 0 (+ gradations 1)))))
+              [:rect {:class frame-class
+                      :id (str id "-frame")
+                      :x "5" :y "5" :height "100" :width "150"}]
               [:circle {:class hub-class
                         :id (str id "-hub")
                         :r "10" :cx "80" :cy "100"}]]
-             ;;; Useful for debugging:
-                           (str "value: " model "; min: " min-value
-                                "; max: " max-value
-                                "; deflection: " (int (deflection model min-value max-value)))
              ]]))

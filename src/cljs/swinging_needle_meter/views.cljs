@@ -6,14 +6,13 @@
             [reagent.core  :as    reagent]))
 
 ;; ------------------------------------------------------------------------------------
-;;  Demo: swinging-needle
+;;  Demo: swinging-needle-meter
 ;; ------------------------------------------------------------------------------------
 
 (defn swinging-needle-demo
   []
   (let [value (reagent/atom 75)
-        setpoint (reagent/atom 75)
-        striped? (reagent/atom false)]
+        setpoint (reagent/atom 75)]
     (fn
       []
       [v-box
@@ -27,13 +26,27 @@
                                :width    "450px"
                                :children [[title2 "Notes"]
                                           [status-text "Wildly experimental"]
-                                          [p "An SVG swinging needle meter."]
+                                          [p "An SVG swinging needle meter intended to be useful in dashboards."]
                                           [p "Note that the cursor will vanish if the setpoint is null or is less than or equal to min-value; this is intentional."]
                                           [p "Note that if the value of model is lower then min-value or greater than max-value,
                                            it will be limited as it would be on a mechanical meter."]
-                                          [p "You can hide the redzone by setting its style to the style 'snm-scale'"]
-                                          [p
-                                           "TODO: You can't adjust the position of the start of the red-zone; "]
+                                          [p "You can hide the redzone by setting its style to the style 'snm-scale', or by setting 'warn-value' equal to 'max-value'."]
+
+                                          [title2 "Behaviour"]
+
+                                          [p "min-value and max-value must be numbers; max-value must be greater than min-value.
+                                           The default behaviour is of a swinging needle meter with the needle deflection proportional
+                                           to the value of the model (also a number) expressed as a proportion of the difference between
+                                           min-value and max-value."]
+
+                                          [p "A red-zone can be introduced by setting a value for warn-value between min-value and max-value. Additionally, if
+                                           the value of model exceeds warn-value the class alarm-class will be set on the meter indicating a warning state."]
+
+                                          [p "A cursor can be shown by setting the value of set-point between min-value and max-value. A tolerance value can be specified
+                                           by setting a value for tolerance. If the difference between the model value and the setpoint value is less than the tolerance
+                                           value, the class target-class will be set on the meter to indicate an on-target status. The setpoint value, like the model value,
+                                           may change dynamically at run-time."]
+
                                           [args-table swinging-needle-args-desc]]]
                               [v-box
                                :gap      "10px"
@@ -43,10 +56,13 @@
                                            :children [[swinging-needle-meter
                                                        :model     value
                                                        :setpoint  setpoint
-;;                                                        :unit      "Mw"
+                                                       :unit      "Mw"
 ;;                                                        :min-value 20
+;;                                                        :warn-value 35
 ;;                                                        :max-value 40
-;;                                                        :alarm-class "snm-warning"
+;;                                                        :max-value (aget js/Math "PI")
+                                                       :tolerance 2
+                                                       :alarm-class "snm-warning"
                                                        :width     "350px"]
                                                       [title :level :level3 :label "Parameters"]
                                                       [h-box

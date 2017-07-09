@@ -6,6 +6,16 @@ Works well in Chrome and Firefox; not tested in Internet Exploder.
 
 ![what it should look like](resources/public/images/example.png)
 
+## Intended uses
+
+This is a component for a console, typically one controlling a technical or scientific instrument. It is
+by design flexible and configurable. Minimum value, maximum value, warning value and number of gradations
+shown are all configurable, as are (obviously) styles.
+
+A cursor will be shown if the value of *setpoint* is between *min-value* and *max-value*; *setpoint* is a dynamic value which is watched during the run. While the *model* value is within +- *tolerance* of the *setpoint* value, a class *target-class* is set on the meter indicating an on-target status (by default the frame goes green).
+
+A red-zone may be shown if a *warn-value* is set which is between *min-value* and *max-value*. If such a *warn-value* is set, then if the current value (*model*) exceeds *warn-value*, a class *warning-class* is set on the meter indicating a warning status (by default the frame goes maroon).
+
 ## Development Mode
 
 ### Run application:
