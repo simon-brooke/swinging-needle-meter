@@ -1,4 +1,5 @@
-(defproject swinging-needle-meter "0.1.0-SNAPSHOT"
+(defproject swinging-needle-meter "1.0.0"
+  :description "A swinging needle meter, as an experiment in animating SVG from re-frame. Draws heavily on re-com."
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.9.229"]
                  [reagent "0.6.0"]
@@ -47,5 +48,4 @@
 
 
     ]}
-
   )
