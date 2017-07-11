@@ -82,6 +82,7 @@
    {:name :attr          :required false :type "HTML attr map"
     :validate-fn html-attr?        :description [:span "HTML attributes, like " [:code ":on-mouse-move"] [:br] "No " [:code ":class"] " or " [:code ":style"] "allowed"]}])
 
+
 (defn abs
   "Return the absolute value of the (numeric) argument."
   [n] (max n (- n)))
@@ -90,20 +91,21 @@
 ;; from the left end of the scale to right end, in degrees.
 (def full-scale-deflection 140)
 
+
 ;; ultimately this should be resizeable, and radius should be a function of
 ;; size...
 (def scale-radius 75)
 
+
 (defn deflection
-  "Return the deflection of a needle given this `value` on the
+  "Return the linear deflection of a needle given this `value` on the
   range `min-value`...`max-value`."
   [value min-value max-value]
   (let [range (- max-value min-value)
-        deflection (/ value range)
         zero-offset (/ (- 0 min-value) range)
-        limited (min (max (+ zero-offset deflection) 0) 1)]
-    (js/console.log (str "zero-offset: " zero-offset))
+        limited (min (max (+ zero-offset (/ value range)) 0) 1)]
     (* (- limited 0.5) full-scale-deflection)))
+
 
 (defn polar-to-cartesian
   "Return, as a map with keys :x. :y, the cartesian coordinates at the point
@@ -114,6 +116,7 @@
     [in-radians (/ (* (- theta 90) (aget js/Math "PI")) 180.0)]
     {:x (+ cx (* radius (.cos js/Math in-radians)))
      :y (+ cy (* radius (.sin js/Math in-radians)))}))
+
 
 (defn describe-arc
   "Return as a string an SVG path definition describing an arc centred
@@ -141,18 +144,21 @@
   "Return as a string an SVG path definition describing a radial stroke from a center
   at `cx`, cy` starting at `min-radius` and extending to `max-radius`."
   [cx cy min-radius max-radius angle label]
-  (let
-    [start (polar-to-cartesian cx cy min-radius angle)
-     mid (polar-to-cartesian cx cy (+ min-radius
-                                      (* (- max-radius min-radius) 0.333))
-                             angle)
-     end (polar-to-cartesian cx cy max-radius angle)]
-    [:g {:class "snm-gradation"}
-     [:path {:d (string/join " " ["M" (:x mid) (:y mid) "L"  (:x end) (:y end)])}]
-     [:text {:text-anchor "middle"
-             :x (:x start)
-             :y (:y start)
-             :transform (string/join " " ["rotate(" angle (:x start) (:y start) ")"])} (as-label label)]]))
+  [:g {:class "snm-gradation"
+       :transform (string/join " " ["rotate(" angle cx cy ")"])}
+   [:path {:d (string/join
+                " "
+                ["M"
+                 cx
+                 (- cy
+                    (+ min-radius
+                       (* (- max-radius min-radius) 0.333)))
+                 "L"
+                 cx
+                 (- cy max-radius)])}]
+   [:text {:text-anchor "middle"
+           :x cx
+           :y (- cy min-radius)} (as-label label)]])
 
 
 (defn swinging-needle-meter
@@ -178,12 +184,7 @@
   {:pre [(validate-args-macro swinging-needle-args-desc args "swinging-needle")]}
   (let [model (deref-or-value model)
         setpoint (deref-or-value setpoint)
-        mid-point-deflection (/ full-scale-deflection 2)
-        ;; if warn-value is greater than max-value, we don't want a red-zone at all.
-        red-zone-deflection (if
-                              (< warn-value max-value)
-                              (* full-scale-deflection (/ warn-value max-value))
-                              full-scale-deflection)]
+        mid-point-deflection (/ full-scale-deflection 2)]
     [box
      :align :start
      :child [:div
@@ -197,9 +198,7 @@
                               {:width width :height height}
                               style)}
                attr)
-             [:svg {:xmlns:svg "http://www.w3.org/2000/svg"
-                    :xmlns "http://www.w3.org/2000/svg"
-                    :xml:space "preserve"
+             [:svg {:xmlSpace "preserve"
                     :overflow "visible"
                     :viewBox "0 0 180 120"
                     :y "0px"
@@ -216,11 +215,14 @@
                 :class "snm-value"}[:tspan (str (as-label model) (if unit " ") unit)]]
               [:path {:class scale-class
                       :id (str id "-scale")
-                      :d (describe-arc 80 100 scale-radius (- 0 mid-point-deflection) mid-point-deflection)}]
+                      :d (describe-arc 80 100 scale-radius
+                                       (deflection min-value min-value max-value)
+                                       (deflection max-value min-value max-value))}]
               [:path {:class redzone-class
                       :id (str id "-redzone")
-                      :d (describe-arc 80 100 scale-radius (- red-zone-deflection mid-point-deflection) mid-point-deflection)}]
-
+                      :d (describe-arc 80 100 scale-radius
+                                       (deflection warn-value min-value max-value)
+                                       (deflection max-value min-value max-value))}]
               [:path {:class cursor-class
                       :id (str id "-cursor")
                       :d "M 80,20 80,100"
@@ -230,15 +232,15 @@
                       :id (str id "-needle")
                       :d "M 80,20 80,100"
                       :transform (str "rotate( " (deflection model min-value max-value) ", 80, 100)") }]
-              (apply vector (cons :g (map #(gradation 80 100 60 82
-                                                      (- (* %
-                                                            (/ full-scale-deflection gradations))
-                                                         mid-point-deflection)
-                                                      (+ min-value
-                                                         (*
-                                                           (/
-                                                             (- max-value min-value)
-                                                             gradations) %)))
+              (apply vector (cons :g (map #(let
+                                             [value (+ min-value
+                                                       (*
+                                                         (/
+                                                           (- max-value min-value)
+                                                           gradations) %))]
+                                             (gradation 80 100 60 82
+                                                        (deflection value min-value max-value)
+                                                        value))
                                           (range 0 (+ gradations 1)))))
               [:rect {:class frame-class
                       :id (str id "-frame")

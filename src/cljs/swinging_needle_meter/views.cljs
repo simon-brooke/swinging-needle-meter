@@ -63,6 +63,7 @@
 ;;                                                        :max-value (aget js/Math "PI")
                                                        :tolerance 2
                                                        :alarm-class "snm-warning"
+                                                       :gradations 5
                                                        :width     "350px"]
                                                       [title :level :level3 :label "Parameters"]
                                                       [h-box
