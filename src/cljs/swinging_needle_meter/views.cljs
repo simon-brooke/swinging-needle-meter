@@ -64,7 +64,8 @@
                                                        :tolerance 2
                                                        :alarm-class "snm-warning"
                                                        :gradations 5
-                                                       :width     "350px"]
+                                                       :height 300
+                                                       :width     500]
                                                       [title :level :level3 :label "Parameters"]
                                                       [h-box
                                                        :gap "10px"

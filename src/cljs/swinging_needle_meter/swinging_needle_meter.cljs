@@ -41,10 +41,10 @@
     :validate-fn number-or-string? :description "current value of the variable being watched. A number between 0 and 100"}
    {:name :setpoint      :required false :type "double | atom"
     :validate-fn number-or-string? :description "current setpoint for the variable being watched, if any. A number between 0 and 100"}
-   {:name :width         :required false :type "string"                 :default "100%"
-    :validate-fn string?           :description "a CSS width"}
-   {:name :height        :required false :type "string"                 :default "100%"
-    :validate-fn string?           :description "a CSS height"}
+   {:name :width         :required false :type "integer"                 :default "300"
+    :validate-fn integer?          :description "a CSS width"}
+   {:name :height        :required false :type "integer"                 :default "200"
+    :validate-fn integer?          :description "a CSS height"}
    {:name :min-value     :required false :type "double"                 :default 0
     :validate-fn number?           :description "the minimum value model can take"}
    {:name :max-value     :required false :type "double"                 :default 100
@@ -90,11 +90,6 @@
 ;; the constant 140 represents the full sweep of the needle
 ;; from the left end of the scale to right end, in degrees.
 (def full-scale-deflection 140)
-
-
-;; ultimately this should be resizeable, and radius should be a function of
-;; size...
-(def scale-radius 75)
 
 
 (defn deflection
@@ -164,8 +159,8 @@
 (defn swinging-needle-meter
   "Render an SVG swinging needle meter"
   [& {:keys [model setpoint width height min-value max-value warn-value tolerance class gradations alarm-class cursor-class frame-class hub-class needle-class redzone-class scale-class target-class unit id style attr]
-      :or   {width          "100%"
-             height         "100%"
+      :or   {width          300
+             height         200
              min-value      0
              max-value      100
              warn-value     80
@@ -184,7 +179,12 @@
   {:pre [(validate-args-macro swinging-needle-args-desc args "swinging-needle")]}
   (let [model (deref-or-value model)
         setpoint (deref-or-value setpoint)
-        mid-point-deflection (/ full-scale-deflection 2)]
+        mid-point-deflection (/ full-scale-deflection 2)
+        cx (/ width 2)
+        cy (* height 0.90)
+        needle-length (* height 0.75)
+        scale-radius (* height 0.7)
+        gradation-inner (* height 0.55)]
     [box
      :align :start
      :child [:div
@@ -200,52 +200,53 @@
                attr)
              [:svg {:xmlSpace "preserve"
                     :overflow "visible"
-                    :viewBox "0 0 180 120"
+                    :viewBox (string/join " " [0 0 width height])
                     :y "0px"
                     :x "0px"
                     :version "1.1"
                     :id id
                     :class (str "snm-meter " class)}
+
               [:text
                {:text-anchor "middle"
-                :x 80
-                :y 70
+                :x (/ width 2)
+                :y (/ height 2)
                 :width "100"
                 :id (str id "-current-value")
                 :class "snm-value"}[:tspan (str (as-label model) (if unit " ") unit)]]
               [:path {:class scale-class
                       :id (str id "-scale")
-                      :d (describe-arc 80 100 scale-radius
+                      :d (describe-arc cx cy scale-radius
                                        (deflection min-value min-value max-value)
                                        (deflection max-value min-value max-value))}]
               [:path {:class redzone-class
                       :id (str id "-redzone")
-                      :d (describe-arc 80 100 scale-radius
+                      :d (describe-arc cx cy scale-radius
                                        (deflection warn-value min-value max-value)
                                        (deflection max-value min-value max-value))}]
               [:path {:class cursor-class
                       :id (str id "-cursor")
-                      :d "M 80,20 80,100"
+                      :d (str "M " cx  "," (- cy needle-length) " " cx "," cy) ;; "M cx,20 cx,100"
                       :visibility (if (and (number? setpoint) (> setpoint min-value)) "visible" "hidden")
-                      :transform (str "rotate( " (deflection setpoint min-value max-value) ", 80, 100)")}]
+                      :transform (str "rotate( " (deflection setpoint min-value max-value) "," cx "," cy ")")}]
               [:path {:class needle-class
                       :id (str id "-needle")
-                      :d "M 80,20 80,100"
-                      :transform (str "rotate( " (deflection model min-value max-value) ", 80, 100)") }]
+                      :d (str "M " cx "," (- cy needle-length) " " cx "," cy) ;; "M cx,20 cx,100"
+                      :transform (str "rotate( " (deflection model min-value max-value) "," cx "," cy ")") }]
               (apply vector (cons :g (map #(let
                                              [value (+ min-value
                                                        (*
                                                          (/
                                                            (- max-value min-value)
                                                            gradations) %))]
-                                             (gradation 80 100 60 82
+                                             (gradation cx cy gradation-inner needle-length
                                                         (deflection value min-value max-value)
                                                         value))
                                           (range 0 (+ gradations 1)))))
               [:rect {:class frame-class
                       :id (str id "-frame")
-                      :x "5" :y "5" :height "100" :width "150"}]
+                      :x (* width 0.05) :y (* height .05) :height cy :width (* width 0.9)}]
               [:circle {:class hub-class
                         :id (str id "-hub")
-                        :r "10" :cx "80" :cy "100"}]]
+                        :r (/ height 10) :cx cx :cy cy}]]
              ]]))
