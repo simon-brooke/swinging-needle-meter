@@ -1,6 +1,7 @@
 (ns swinging-needle-meter.views
   (:require [re-frame.core :as    re-frame]
-            [re-com.core   :refer [h-box v-box box gap line label title progress-bar slider checkbox p]]
+            [re-com.core   :refer [h-box v-box box gap line label title progress-bar slider checkbox p single-dropdown]]
+            [re-com.util   :refer [deref-or-value]]
             [swinging-needle-meter.swinging-needle-meter :refer [swinging-needle-meter  swinging-needle-args-desc]]
             [swinging-needle-meter.utils   :refer [panel-title title2 args-table github-hyperlink status-text]]
             [reagent.core  :as    reagent]))
@@ -11,8 +12,14 @@
 
 (defn swinging-needle-demo
   []
-  (let [value (reagent/atom 75)
-        setpoint (reagent/atom 75)]
+  (let [value (reagent/atom 60)
+        setpoint (reagent/atom 75)
+        gradations (reagent/atom 5)
+        size (reagent/atom 70)
+        min-val (reagent/atom 0)
+        max-val (reagent/atom 100)
+        warn-val (reagent/atom 80)
+        unit (reagent/atom "Mw")]
     (fn
       []
       [v-box
@@ -56,23 +63,22 @@
                                            :children [[swinging-needle-meter
                                                        :model     value
                                                        :setpoint  setpoint
-                                                       :unit      "Mw"
-;;                                                        :min-value 20
-;;                                                        :warn-value 35
-;;                                                        :max-value 40
-;;                                                        :max-value (aget js/Math "PI")
+                                                       :unit      (deref-or-value unit)
+                                                       :min-value (deref-or-value min-val)
+                                                       :warn-value (deref-or-value warn-val)
+                                                       :max-value (deref-or-value max-val)
                                                        :tolerance 2
                                                        :alarm-class "snm-warning"
-                                                       :gradations 5
-                                                       :height 300
-                                                       :width     500]
+                                                       :gradations (deref-or-value gradations)
+                                                       :height    (int (* (deref-or-value size) 6))
+                                                       :width     (int (* (deref-or-value size) 10))]
                                                       [title :level :level3 :label "Parameters"]
                                                       [h-box
                                                        :gap "10px"
                                                        :children [[box :align :start :child [:code ":model"]]
                                                                   [slider
                                                                    :model     value
-                                                                   :min       0
+                                                                   :min       -100
                                                                    :max       100
                                                                    :width     "200px"
                                                                    :on-change #(reset! value %)]
@@ -82,11 +88,72 @@
                                                        :children [[box :align :start :child [:code ":setpoint"]]
                                                                   [slider
                                                                    :model     setpoint
-                                                                   :min       0
+                                                                   :min       -100
                                                                    :max       100
                                                                    :width     "200px"
                                                                    :on-change #(reset! setpoint %)]
                                                                   [label :label @setpoint]]]
+                                                      [h-box
+                                                       :gap "10px"
+                                                       :children [[box :align :start :child [:code ":min-val"]]
+                                                                  [slider
+                                                                   :model     min-val
+                                                                   :min       -100
+                                                                   :max       100
+                                                                   :width     "200px"
+                                                                   :on-change #(reset! min-val %)]
+                                                                  [label :label @min-val]]]
+                                                      [h-box
+                                                       :gap "10px"
+                                                       :children [[box :align :start :child [:code ":max-val"]]
+                                                                  [slider
+                                                                   :model     max-val
+                                                                   :min       -100
+                                                                   :max       100
+                                                                   :width     "200px"
+                                                                   :on-change #(reset! max-val %)]
+                                                                  [label :label @max-val]]]
+                                                      [h-box
+                                                       :gap "10px"
+                                                       :children [[box :align :start :child [:code ":warn-val"]]
+                                                                  [slider
+                                                                   :model     warn-val
+                                                                   :min       -100
+                                                                   :max       100
+                                                                   :width     "200px"
+                                                                   :on-change #(reset! warn-val %)]
+                                                                  [label :label @warn-val]]]
+                                                      [h-box
+                                                       :gap "10px"
+                                                       :children [[box :align :start :child [:code ":gradations"]]
+                                                                  [slider
+                                                                   :model     gradations
+                                                                   :min       0
+                                                                   :max       10
+                                                                   :width     "200px"
+                                                                   :on-change #(reset! gradations %)]
+                                                                  [label :label @gradations]]]
+                                                      [h-box
+                                                       :gap "10px"
+                                                       :children [[box :align :start :child [:code ":unit"]]
+                                                                  [single-dropdown
+                                                                   :model     unit
+                                                                   :choices [{:id "Mw" :label "Megawatts" :group "Electrical"}
+                                                                             {:id "M/s" :label "Metres per second" :group "Motion"}
+                                                                             {:id "F/f" :label "Furlongs per fortnight" :group "Motion"}
+                                                                             {:id "°C" :label "Degrees Celsius" :group "Temperature"}]
+                                                                   :width     "200px"
+                                                                   :on-change #(reset! unit %)]]]
+                                                      [h-box
+                                                       :gap "10px"
+                                                       :children [[box :align :start :child [:code ":size"]]
+                                                                  [slider
+                                                                   :model     size
+                                                                   :min       25
+                                                                   :max       100
+                                                                   :width     "200px"
+                                                                   :on-change #(reset! size %)]
+                                                                  [label :label @size]]]
                                                       ]]]]]]]])))
 
 

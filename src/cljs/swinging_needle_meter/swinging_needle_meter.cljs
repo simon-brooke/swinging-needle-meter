@@ -156,6 +156,12 @@
            :y (- cy min-radius)} (as-label label)]])
 
 
+(defn as-mm
+  "return the argument, as a string, with 'mm' appended"
+  [arg]
+  (str arg "mm"))
+
+
 (defn swinging-needle-meter
   "Render an SVG swinging needle meter"
   [& {:keys [model setpoint width height min-value max-value warn-value tolerance class gradations alarm-class cursor-class frame-class hub-class needle-class redzone-class scale-class target-class unit id style attr]
@@ -201,6 +207,8 @@
              [:svg {:xmlSpace "preserve"
                     :overflow "visible"
                     :viewBox (string/join " " [0 0 width height])
+                    :width (str width "px")
+                    :height (str height "px")
                     :y "0px"
                     :x "0px"
                     :version "1.1"
@@ -233,16 +241,17 @@
                       :id (str id "-needle")
                       :d (str "M " cx "," (- cy needle-length) " " cx "," cy) ;; "M cx,20 cx,100"
                       :transform (str "rotate( " (deflection model min-value max-value) "," cx "," cy ")") }]
-              (apply vector (cons :g (map #(let
-                                             [value (+ min-value
-                                                       (*
-                                                         (/
-                                                           (- max-value min-value)
-                                                           gradations) %))]
-                                             (gradation cx cy gradation-inner needle-length
-                                                        (deflection value min-value max-value)
-                                                        value))
-                                          (range 0 (+ gradations 1)))))
+              (if (> gradations 0)
+                (apply vector (cons :g (map #(let
+                                               [value (+ min-value
+                                                         (*
+                                                           (/
+                                                             (- max-value min-value)
+                                                             gradations) %))]
+                                               (gradation cx cy gradation-inner needle-length
+                                                          (deflection value min-value max-value)
+                                                          value))
+                                            (range 0 (+ gradations 1))))))
               [:rect {:class frame-class
                       :id (str id "-frame")
                       :x (* width 0.05) :y (* height .05) :height cy :width (* width 0.9)}]
