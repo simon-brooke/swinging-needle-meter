@@ -107,32 +107,32 @@
                                                        :gap "10px"
                                                        :children [[box :align :start :child [:code ":max-val"]]
                                                                   [slider
-                                                                   :model     max-val
+                                                                   :model     @(rf/subscribe [:max-val])
                                                                    :min       -100
                                                                    :max       100
                                                                    :width     "200px"
                                                                    :on-change #(rf/dispatch [:set-max-value %])]
-                                                                  [label :label max-val]]]
+                                                                  [label :label @(rf/subscribe [:max-val])]]]
                                                       [h-box
                                                        :gap "10px"
                                                        :children [[box :align :start :child [:code ":warn-val"]]
                                                                   [slider
-                                                                   :model     warn-val
+                                                                   :model     @(rf/subscribe [:warn-val])
                                                                    :min       -100
                                                                    :max       100
                                                                    :width     "200px"
                                                                    :on-change #(rf/dispatch [:set-warning-value %])]
-                                                                  [label :label warn-val]]]
+                                                                  [label :label @(rf/subscribe [:warn-val])]]]
                                                       [h-box
                                                        :gap "10px"
                                                        :children [[box :align :start :child [:code ":gradations"]]
                                                                   [slider
-                                                                   :model     gradations
+                                                                   :model     @(rf/subscribe [:gradations])
                                                                    :min       0
                                                                    :max       10
                                                                    :width     "200px"
                                                                    :on-change #(rf/dispatch [:set-gradations %])]
-                                                                  [label :label gradations]]]
+                                                                  [label :label @(rf/subscribe [:gradations])]]]
                                                       [h-box
                                                        :gap "10px"
                                                        :children [[box :align :start :child [:code ":unit"]]
