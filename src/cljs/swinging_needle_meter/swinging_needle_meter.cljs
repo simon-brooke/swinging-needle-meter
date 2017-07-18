@@ -4,7 +4,8 @@
             [re-com.box      :refer [flex-child-style]]
             [re-com.util     :refer [deref-or-value]]
             [re-com.validate :refer [number-or-string? css-style? html-attr? validate-args-macro]]
-            [reagent.core    :as    reagent]))
+            [reagent.core    :as    reagent]
+            [swinging-needle-meter.utils :refer [abs]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
@@ -81,11 +82,6 @@
     :validate-fn css-style?        :description "CSS styles to add or override"}
    {:name :attr          :required false :type "HTML attr map"
     :validate-fn html-attr?        :description [:span "HTML attributes, like " [:code ":on-mouse-move"] [:br] "No " [:code ":class"] " or " [:code ":style"] "allowed"]}])
-
-
-(defn abs
-  "Return the absolute value of the (numeric) argument."
-  [n] (max n (- n)))
 
 ;; the constant 140 represents the full sweep of the needle
 ;; from the left end of the scale to right end, in degrees.
