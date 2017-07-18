@@ -13,6 +13,11 @@
    (:value db)))
 
 (re-frame/reg-sub
+ :old-value
+ (fn [db]
+   (:old-value db)))
+
+(re-frame/reg-sub
  :setpoint
  (fn [db]
    (:setpoint db)))

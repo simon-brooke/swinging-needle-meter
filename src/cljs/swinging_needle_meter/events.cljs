@@ -8,17 +8,22 @@
  (fn  [_ _]
    state/default-state))
 
-;; The clock ticked.
+;; The clock ticked. Implement a mechanical swing.
 (re-frame/reg-event-db
  :timer
- (fn [db _]
-   db))
+ (fn [db [x value]]
+   (let [old-value (:old-value db)
+         target (:value db)
+         new-value (+ old-value (/ (- target old-value) 10))]
+   (assoc db :old-value new-value))))
 
 (re-frame/reg-event-db
  :set-value
  (fn [db [x value]]
-   (js/console.log (str :set-value " " x " " value))
-   (assoc db :value value)))
+   (assoc
+     (assoc db :old-value (:value db))
+     :value
+     value)))
 
 (re-frame/reg-event-db
  :set-setpoint

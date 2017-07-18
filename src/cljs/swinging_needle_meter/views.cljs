@@ -11,14 +11,6 @@
 ;;  Demo: swinging-needle-meter
 ;; ------------------------------------------------------------------------------------
 
-(defn dispatch-timer-event
-  []
-  (let [now (js/Date.)]
-    (rf/dispatch [:timer now])))  ;; <-- dispatch used
-
-;; call the dispatching function every tenth of a second
-(defonce do-timer (js/setInterval dispatch-timer-event 100))
-
 
 (defn swinging-needle-demo
   []
@@ -69,7 +61,7 @@
                                           [v-box
                                            :gap      "20px"
                                            :children [[swinging-needle-meter
-                                                       :model     @(rf/subscribe [:value])
+                                                       :model     @(rf/subscribe [:old-value])
                                                        :setpoint  @(rf/subscribe [:setpoint])
                                                        :unit      @(rf/subscribe [:unit])
                                                        :min-value @(rf/subscribe [:min-val])

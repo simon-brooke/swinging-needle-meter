@@ -5,6 +5,7 @@
 (def default-state
   {:timer (js/Date.)
    :value 60
+   :old-value 0
    :setpoint 75
    :gradations 5
    :size 70
