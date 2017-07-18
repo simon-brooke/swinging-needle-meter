@@ -1,11 +1,12 @@
-(defproject swinging-needle-meter "1.0.0"
+(defproject swinging-needle-meter "1.0.1"
   :description "A swinging needle meter, as an experiment in animating SVG from re-frame. Draws heavily on re-com."
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.9.229"]
                  [reagent "0.6.0"]
                  [re-frame "0.9.4"]
                  [org.clojure/core.async "0.2.391"]
-                 [re-com "2.0.0"]]
+                 [re-com "2.0.0"]
+                 [org.webjars.bower/snap.svg "0.4.1"]]
 
   :plugins [[lein-cljsbuild "1.1.4"]]
 
@@ -20,9 +21,7 @@
   :profiles
   {:dev
    {:dependencies [[binaryage/devtools "0.8.2"]]
-
-    :plugins      [[lein-figwheel "0.5.9"]]
-    }}
+    :plugins      [[lein-figwheel "0.5.9"]]}}
 
   :cljsbuild
   {:builds
@@ -44,8 +43,4 @@
                     :output-to       "resources/public/js/compiled/app.js"
                     :optimizations   :advanced
                     :closure-defines {goog.DEBUG false}
-                    :pretty-print    false}}
-
-
-    ]}
-  )
+                    :pretty-print    false}}]})

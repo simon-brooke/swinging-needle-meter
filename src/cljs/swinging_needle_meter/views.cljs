@@ -1,18 +1,25 @@
 (ns swinging-needle-meter.views
-  (:require [re-frame.core :as    re-frame]
-            [re-com.core   :refer [h-box v-box box gap line label title progress-bar slider checkbox p]]
+  (:require [re-frame.core :as    rf]
+            [re-com.core   :refer [h-box v-box box gap line label title progress-bar slider checkbox p single-dropdown]]
+            [re-com.util   :refer [deref-or-value]]
             [swinging-needle-meter.swinging-needle-meter :refer [swinging-needle-meter  swinging-needle-args-desc]]
             [swinging-needle-meter.utils   :refer [panel-title title2 args-table github-hyperlink status-text]]
-            [reagent.core  :as    reagent]))
+            [reagent.core  :as    reagent]
+            [swinging-needle-meter.utils :refer [abs]]))
 
 ;; ------------------------------------------------------------------------------------
 ;;  Demo: swinging-needle-meter
 ;; ------------------------------------------------------------------------------------
 
+
 (defn swinging-needle-demo
   []
-  (let [value (reagent/atom 75)
-        setpoint (reagent/atom 75)]
+  (let [unit @(rf/subscribe [:unit])
+        min-val @(rf/subscribe [:min-val])
+        max-val @(rf/subscribe [:max-val])
+        warn-val @(rf/subscribe [:warn-val])
+        gradations @(rf/subscribe [:gradations])
+        size @(rf/subscribe [:size])]
     (fn
       []
       [v-box
@@ -54,37 +61,99 @@
                                           [v-box
                                            :gap      "20px"
                                            :children [[swinging-needle-meter
-                                                       :model     value
-                                                       :setpoint  setpoint
-                                                       :unit      "Mw"
-;;                                                        :min-value 20
-;;                                                        :warn-value 35
-;;                                                        :max-value 40
-;;                                                        :max-value (aget js/Math "PI")
+                                                       :model     @(rf/subscribe [:old-value])
+                                                       :setpoint  @(rf/subscribe [:setpoint])
+                                                       :unit      @(rf/subscribe [:unit])
+                                                       :min-value @(rf/subscribe [:min-val])
+                                                       :warn-value @(rf/subscribe [:warn-val])
+                                                       :max-value @(rf/subscribe [:max-val])
                                                        :tolerance 2
                                                        :alarm-class "snm-warning"
-                                                       :width     "350px"]
+                                                       :gradations @(rf/subscribe [:gradations])
+                                                       :height    (int (* @(rf/subscribe [:size]) 6))
+                                                       :width     (int (* @(rf/subscribe [:size]) 10))]
                                                       [title :level :level3 :label "Parameters"]
                                                       [h-box
                                                        :gap "10px"
                                                        :children [[box :align :start :child [:code ":model"]]
                                                                   [slider
-                                                                   :model     value
-                                                                   :min       0
+                                                                   :model     @(rf/subscribe [:value])
+                                                                   :min       -100
                                                                    :max       100
                                                                    :width     "200px"
-                                                                   :on-change #(reset! value %)]
-                                                                  [label :label @value]]]
+                                                                   :on-change #(rf/dispatch [:set-value %])]
+                                                                  [label :label @(rf/subscribe [:value])]]]
                                                       [h-box
                                                        :gap "10px"
                                                        :children [[box :align :start :child [:code ":setpoint"]]
                                                                   [slider
-                                                                   :model     setpoint
-                                                                   :min       0
+                                                                   :model     @(rf/subscribe [:setpoint])
+                                                                   :min       -100
                                                                    :max       100
                                                                    :width     "200px"
-                                                                   :on-change #(reset! setpoint %)]
-                                                                  [label :label @setpoint]]]
+                                                                   :on-change #(rf/dispatch [:set-setpoint %])]
+                                                                  [label :label @(rf/subscribe [:setpoint])]]]
+                                                      [h-box
+                                                       :gap "10px"
+                                                       :children [[box :align :start :child [:code ":min-val"]]
+                                                                  [slider
+                                                                   :model     @(rf/subscribe [:min-val])
+                                                                   :min       -100
+                                                                   :max       100
+                                                                   :width     "200px"
+                                                                   :on-change #(rf/dispatch [:set-min-value %])]
+                                                                  [label :label @(rf/subscribe [:min-val])]]]
+                                                      [h-box
+                                                       :gap "10px"
+                                                       :children [[box :align :start :child [:code ":max-val"]]
+                                                                  [slider
+                                                                   :model     @(rf/subscribe [:max-val])
+                                                                   :min       -100
+                                                                   :max       100
+                                                                   :width     "200px"
+                                                                   :on-change #(rf/dispatch [:set-max-value %])]
+                                                                  [label :label @(rf/subscribe [:max-val])]]]
+                                                      [h-box
+                                                       :gap "10px"
+                                                       :children [[box :align :start :child [:code ":warn-val"]]
+                                                                  [slider
+                                                                   :model     @(rf/subscribe [:warn-val])
+                                                                   :min       -100
+                                                                   :max       100
+                                                                   :width     "200px"
+                                                                   :on-change #(rf/dispatch [:set-warning-value %])]
+                                                                  [label :label @(rf/subscribe [:warn-val])]]]
+                                                      [h-box
+                                                       :gap "10px"
+                                                       :children [[box :align :start :child [:code ":gradations"]]
+                                                                  [slider
+                                                                   :model     @(rf/subscribe [:gradations])
+                                                                   :min       0
+                                                                   :max       10
+                                                                   :width     "200px"
+                                                                   :on-change #(rf/dispatch [:set-gradations %])]
+                                                                  [label :label @(rf/subscribe [:gradations])]]]
+                                                      [h-box
+                                                       :gap "10px"
+                                                       :children [[box :align :start :child [:code ":unit"]]
+                                                                  [single-dropdown
+                                                                   :model     @(rf/subscribe [:unit])
+                                                                   :choices [{:id "Mw" :label "Megawatts" :group "Electrical"}
+                                                                             {:id "M/s" :label "Metres per second" :group "Motion"}
+                                                                             {:id "F/f" :label "Furlongs per fortnight" :group "Motion"}
+                                                                             {:id "°C" :label "Degrees Celsius" :group "Temperature"}]
+                                                                   :width     "200px"
+                                                                   :on-change #(rf/dispatch [:set-unit %])]]]
+                                                      [h-box
+                                                       :gap "10px"
+                                                       :children [[box :align :start :child [:code ":size"]]
+                                                                  [slider
+                                                                   :model     size
+                                                                   :min       25
+                                                                   :max       100
+                                                                   :width     "200px"
+                                                                   :on-change #(rf/dispatch [:set-size %])]
+                                                                  [label :label size]]]
                                                       ]]]]]]]])))
 
 

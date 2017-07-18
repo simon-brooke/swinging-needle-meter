@@ -1,8 +1,14 @@
 (ns swinging-needle-meter.utils
   (:require [re-com.core :refer [h-box v-box box gap title line label hyperlink-href align-style]]))
 
-;;;; This file is just stolen wholesale from re-demo in the re-com package;
+;;;; This file is mostly stolen wholesale from re-demo in the re-com package;
 ;;;; I claim no credit for it.
+
+
+(defn abs
+  "Return the absolute value of the (numeric) argument."
+  [n] (max n (- n)))
+
 
 (defn github-hyperlink
   "given a label and a relative path, return a component which hyperlinks to the GitHub URL in a new tab"
