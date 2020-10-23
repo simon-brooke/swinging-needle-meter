@@ -6,6 +6,10 @@ Works well in Chrome and Firefox; not tested in Internet Exploder.
 
 ![what it should look like](resources/public/images/example.png)
 
+## Demo site
+
+There's a demo site [here](https://simon-brooke.github.io/swinging-needle-meter/resources/public/index.html).
+
 ## Intended uses
 
 This is a component for a console, typically one controlling a technical or scientific instrument. It is
