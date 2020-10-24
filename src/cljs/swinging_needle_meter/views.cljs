@@ -164,12 +164,12 @@
                                                        :gap "10px"
                                                        :children [[box :align :start :child [:code ":size"]]
                                                                   [slider
-                                                                   :model     size
+                                                                   :model     @(rf/subscribe [:size])
                                                                    :min       25
                                                                    :max       100
                                                                    :width     "200px"
                                                                    :on-change #(rf/dispatch [:set-size %])]
-                                                                  [label :label size]]]
+                                                                  [label :label @(rf/subscribe [:size])]]]
                                                       ]]]]]]]])))
 
 
