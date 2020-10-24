@@ -25,10 +25,8 @@ A red-zone may be shown if a *warn-value* is set which is between *min-value* an
 In your cljs file, require the following:
 
 ```clojure
-(:require [re-frame.core :as    rf]
-            [re-com.core   :refer [h-box v-box box label title slider p single-dropdown]]
-            [swinging-needle-meter.swinging-needle-meter :refer [swinging-needle-meter  swinging-needle-args-desc]]
-            [swinging-needle-meter.utils   :refer [panel-title title2 args-table status-text]])
+  (:require [re-frame.core :as rf]
+            [swinging-needle-meter.swinging-needle-meter :refer [swinging-needle-meter]])
 ```
 
 within a [re-com](https://github.com/day8/re-com) component, 
@@ -58,7 +56,7 @@ or, minimally, just
 There are further arguments which may be set which are documented 
 [here](https://simon-brooke.github.io/swinging-needle-meter/resources/public/index.html#parameters).
 
-Obviously, all the subscriptions above must be registered with `re-frame/reg-sub`.
+Obviously, all the subscriptions above must be registered with `re-frame/reg-sub`. See [re-frame documentation](http://day8.github.io/re-frame/re-frame/).
 
 The value subscribed to as the value to `:model` is expected to be a floating point number between that of `:min-value` and `:max-value`. 
 
