@@ -1,10 +1,9 @@
 (ns swinging-needle-meter.swinging-needle-meter
   (:require [clojure.string :as string]
-            [re-com.core     :refer [h-box v-box box gap line label title slider checkbox p]]
+            [re-com.core     :refer [box]]
             [re-com.box      :refer [flex-child-style]]
             [re-com.util     :refer [deref-or-value]]
             [re-com.validate :refer [number-or-string? css-style? html-attr? validate-args-macro]]
-            [reagent.core    :as    reagent]
             [swinging-needle-meter.utils :refer [abs]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -87,7 +86,6 @@
 ;; from the left end of the scale to right end, in degrees.
 (def full-scale-deflection 140)
 
-
 (defn deflection
   "Return the linear deflection of a needle given this `value` on the
   range `min-value`...`max-value`."
@@ -96,7 +94,6 @@
         zero-offset (/ (- 0 min-value) range)
         limited (min (max (+ zero-offset (/ value range)) 0) 1)]
     (* (- limited 0.5) full-scale-deflection)))
-
 
 (defn polar-to-cartesian
   "Return, as a map with keys :x. :y, the cartesian coordinates at the point
@@ -107,7 +104,6 @@
     [in-radians (/ (* (- theta 90) (aget js/Math "PI")) 180.0)]
     {:x (+ cx (* radius (.cos js/Math in-radians)))
      :y (+ cy (* radius (.sin js/Math in-radians)))}))
-
 
 (defn describe-arc
   "Return as a string an SVG path definition describing an arc centred
@@ -121,7 +117,6 @@
      sweep (if (> end-angle start-angle) 1 0)]
     (string/join " " ["M" (:x start) (:y start) "A" radius radius 0 large-arc? sweep (:x end) (:y end)])))
 
-
 (defn as-label
   "If this arg is a floating point number, format it to a reasonable width; else return it."
   [arg]
@@ -129,7 +124,6 @@
     (and (number? arg) (not (integer? arg)))
     (.toFixed arg 2)
     arg))
-
 
 (defn gradation
   "Return as a string an SVG path definition describing a radial stroke from a center
@@ -150,13 +144,6 @@
    [:text {:text-anchor "middle"
            :x cx
            :y (- cy min-radius)} (as-label label)]])
-
-
-(defn as-mm
-  "return the argument, as a string, with 'mm' appended"
-  [arg]
-  (str arg "mm"))
-
 
 (defn swinging-needle-meter
   "Render an SVG swinging needle meter"
@@ -181,7 +168,6 @@
   {:pre [(validate-args-macro swinging-needle-args-desc args "swinging-needle")]}
   (let [model (deref-or-value model)
         setpoint (deref-or-value setpoint)
-        mid-point-deflection (/ full-scale-deflection 2)
         cx (/ width 2)
         cy (* height 0.90)
         needle-length (* height 0.75)
@@ -217,7 +203,7 @@
                 :y (/ height 2)
                 :width "100"
                 :id (str id "-current-value")
-                :class "snm-value"}[:tspan (str (as-label model) (if unit " ") unit)]]
+                :class "snm-value"}[:tspan (str (as-label model) (when unit " ") unit)]]
               [:path {:class scale-class
                       :id (str id "-scale")
                       :d (describe-arc cx cy scale-radius
@@ -237,7 +223,7 @@
                       :id (str id "-needle")
                       :d (str "M " cx "," (- cy needle-length) " " cx "," cy) ;; "M cx,20 cx,100"
                       :transform (str "rotate( " (deflection model min-value max-value) "," cx "," cy ")") }]
-              (if (> gradations 0)
+              (when (> gradations 0)
                 (apply vector (cons :g (map #(let
                                                [value (+ min-value
                                                          (*

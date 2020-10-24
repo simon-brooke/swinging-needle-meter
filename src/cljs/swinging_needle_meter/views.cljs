@@ -1,25 +1,40 @@
 (ns swinging-needle-meter.views
   (:require [re-frame.core :as    rf]
-            [re-com.core   :refer [h-box v-box box gap line label title progress-bar slider checkbox p single-dropdown]]
-            [re-com.util   :refer [deref-or-value]]
+            [re-com.core   :refer [h-box v-box box label title slider p single-dropdown]]
             [swinging-needle-meter.swinging-needle-meter :refer [swinging-needle-meter  swinging-needle-args-desc]]
-            [swinging-needle-meter.utils   :refer [panel-title title2 args-table github-hyperlink status-text]]
-            [reagent.core  :as    reagent]
-            [swinging-needle-meter.utils :refer [abs]]))
+            [swinging-needle-meter.utils   :refer [panel-title title2 args-table status-text]]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; swinging-needle-meter: an experiment in animating SVG from re-frame.
+;;;; Draws heavily on re-com..
+;;;;
+;;;; This program is free software; you can redistribute it and/or
+;;;; modify it under the terms of the GNU General Public License
+;;;; as published by the Free Software Foundation; either version 2
+;;;; of the License, or (at your option) any later version.
+;;;;
+;;;; This program is distributed in the hope that it will be useful,
+;;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;;; GNU General Public License for more details.
+;;;;
+;;;; You should have received a copy of the GNU General Public License
+;;;; along with this program; if not, write to the Free Software
+;;;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+;;;; USA.
+;;;;
+;;;; Copyright (C) 2017 Simon Brooke
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; ------------------------------------------------------------------------------------
 ;;  Demo: swinging-needle-meter
 ;; ------------------------------------------------------------------------------------
 
-
 (defn swinging-needle-demo
   []
-  (let [unit @(rf/subscribe [:unit])
-        min-val @(rf/subscribe [:min-val])
-        max-val @(rf/subscribe [:max-val])
-        warn-val @(rf/subscribe [:warn-val])
-        gradations @(rf/subscribe [:gradations])
-        size @(rf/subscribe [:size])]
+  (let [size @(rf/subscribe [:size])]
     (fn
       []
       [v-box
