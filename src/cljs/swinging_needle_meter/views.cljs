@@ -47,7 +47,7 @@
                                :gap      "10px"
                                :width    "450px"
                                :children [[title2 "Notes"]
-                                          [status-text "Wildly experimental"]
+                                          [status-text "Stable"]
                                           [p "An SVG swinging needle meter intended to be useful in dashboards."]
                                           [p "Note that the cursor will vanish if the setpoint is null or is less than or equal to min-value; this is intentional."]
                                           [p "Note that if the value of model is lower then min-value or greater than max-value,
