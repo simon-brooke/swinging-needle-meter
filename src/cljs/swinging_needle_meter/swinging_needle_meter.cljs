@@ -27,7 +27,7 @@
 ;;;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
 ;;;; USA.
 ;;;;
-;;;; Copyright (C) 2014 Simon Brooke
+;;;; Copyright (C) 2017 Simon Brooke
 ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
