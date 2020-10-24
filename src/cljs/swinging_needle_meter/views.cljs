@@ -69,7 +69,8 @@
                                            value, the class target-class will be set on the meter to indicate an on-target status. The setpoint value, like the model value,
                                            may change dynamically at run-time."]
 
-                                          [args-table swinging-needle-args-desc]]]
+                                          [:a {:name "parameters"}
+                                           [args-table swinging-needle-args-desc]]]]
                               [v-box
                                :gap      "10px"
                                :children [[title2 "Demo"]
